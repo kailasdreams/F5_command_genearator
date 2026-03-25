@@ -1,0 +1,2637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F5 Network Automation Console</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #060a0f;
+    --surface: #0d1520;
+    --surface2: #111d2e;
+    --border: #1a3a5c;
+    --accent: #00d4ff;
+    --accent2: #00ff9f;
+    --accent3: #ff6b35;
+    --warn: #ffb800;
+    --danger: #ff3860;
+    --text: #c8e0f4;
+    --text-dim: #5a7a9a;
+    --text-bright: #e8f4ff;
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+    --glow2: 0 0 20px rgba(0,255,159,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Top scanline */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scanH 3s ease-in-out infinite;
+    z-index: 1000;
+  }
+
+  @keyframes scanH {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* HEADER */
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    letter-spacing: 4px;
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .header-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 10px var(--accent2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  .status-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 1px;
+  }
+
+  /* LAYOUT */
+  .app-container {
+    display: flex;
+    position: relative;
+    z-index: 1;
+    height: calc(100vh - 72px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-section {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 0 16px 10px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-item:hover {
+    background: rgba(0,212,255,0.05);
+    color: var(--accent);
+  }
+
+  .nav-item.active {
+    background: rgba(0,212,255,0.08);
+    border-left-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .nav-item .step-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .step-num {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .nav-item.completed .step-num {
+    background: rgba(0,255,159,0.1);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  .nav-item.completed { color: var(--accent2); }
+
+  /* MAIN CONTENT */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* SESSION HEADER */
+  .session-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,107,53,0.1);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 4px;
+    letter-spacing: 2px;
+  }
+
+  .page-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.4;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .icon { font-size: 16px; }
+
+  /* FORM ELEMENTS */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-group label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(0,212,255,0.1);
+  }
+
+  .form-group select option { background: var(--surface); }
+
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* TOGGLE */
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+  }
+
+  .toggle {
+    position: relative;
+    width: 40px; height: 20px;
+    cursor: pointer;
+  }
+
+  .toggle input { display: none; }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 10px;
+    transition: 0.2s;
+  }
+
+  .toggle input:checked ~ .toggle-track { background: var(--accent); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: 0.2s;
+  }
+
+  .toggle input:checked ~ .toggle-thumb { left: 23px; }
+
+  .toggle-label {
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 8px 20px;
+    border-radius: 4px;
+    border: none;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 0 15px rgba(0,212,255,0.2);
+  }
+
+  .btn-primary:hover {
+    box-shadow: var(--glow);
+    transform: translateY(-1px);
+  }
+
+  .btn-success {
+    background: var(--accent2);
+    color: var(--bg);
+    box-shadow: 0 0 15px rgba(0,255,159,0.2);
+  }
+
+  .btn-success:hover { box-shadow: var(--glow2); transform: translateY(-1px); }
+
+  .btn-danger { background: var(--danger); color: white; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-warn { background: var(--warn); color: var(--bg); }
+
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* OUTPUT / TERMINAL */
+  .terminal {
+    background: #020507;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 16px;
+    scrollbar-width: thin;
+  }
+
+  .terminal-line { margin: 2px 0; }
+  .t-prompt { color: var(--accent2); }
+  .t-cmd { color: var(--text-bright); }
+  .t-ok { color: var(--accent2); }
+  .t-err { color: var(--danger); }
+  .t-info { color: var(--accent); }
+  .t-warn { color: var(--warn); }
+  .t-dim { color: var(--text-dim); }
+
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-r { background: var(--danger); }
+  .dot-y { background: var(--warn); }
+  .dot-g { background: var(--accent2); }
+
+  .terminal-title {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-left: 6px;
+  }
+
+  /* TAGS */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .tag-info { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .tag-success { background: rgba(0,255,159,0.1); color: var(--accent2); border: 1px solid rgba(0,255,159,0.3); }
+  .tag-warn { background: rgba(255,184,0,0.1); color: var(--warn); border: 1px solid rgba(255,184,0,0.3); }
+  .tag-danger { background: rgba(255,56,96,0.1); color: var(--danger); border: 1px solid rgba(255,56,96,0.3); }
+
+  /* TABLE */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(26,58,92,0.5);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+  }
+
+  .data-table tr:hover td { background: rgba(0,212,255,0.03); }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* HIDDEN/SHOWN SECTIONS */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* STEP INDICATOR */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .step-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .step-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;align-items:center;justify-content:center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--bg);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-dot.active .step-circle { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.4); }
+  .step-dot.done .step-circle { border-color: var(--accent2); background: rgba(0,255,159,0.1); color: var(--accent2); }
+
+  .step-line {
+    width: 50px; height: 2px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin-top: -14px;
+  }
+
+  .step-line.done { background: var(--accent2); }
+
+  .step-label {
+    font-size: 9px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .step-dot.active .step-label { color: var(--accent); }
+
+  /* ALERT */
+  .alert {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin: 12px 0;
+    line-height: 1.5;
+  }
+
+  .alert-info { background: rgba(0,212,255,0.07); border: 1px solid rgba(0,212,255,0.2); color: var(--accent); }
+  .alert-warn { background: rgba(255,184,0,0.07); border: 1px solid rgba(255,184,0,0.2); color: var(--warn); }
+  .alert-success { background: rgba(0,255,159,0.07); border: 1px solid rgba(0,255,159,0.2); color: var(--accent2); }
+
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* NODE TABLE */
+  .node-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .node-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+  }
+
+  .node-status {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .node-up { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .node-down { background: var(--danger); }
+  .node-unknown { background: var(--text-dim); }
+
+  .node-ip { color: var(--accent); min-width: 120px; }
+  .node-name { color: var(--text-bright); flex: 1; }
+  .node-port { color: var(--text-dim); min-width: 60px; }
+
+  /* IRULE */
+  .irule-box {
+    background: #020507;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .irule-kw { color: #ff79c6; }
+  .irule-event { color: var(--accent); }
+  .irule-str { color: var(--accent2); }
+  .irule-comment { color: var(--text-dim); }
+
+  /* SPINNER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid transparent;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+
+  /* SECTIONS */
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ha-device-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .ha-device-pair { grid-template-columns: 1fr; }
+    .sidebar { width: 220px; }
+  }
+
+  /* BLINKING CURSOR */
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  .cursor { animation: blink 1s step-end infinite; }
+
+  /* UCS BACKUP */
+  .backup-card {
+    background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(0,255,159,0.03));
+    border: 1px solid rgba(0,212,255,0.2);
+  }
+
+  .cert-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+
+  .cert-icon { font-size: 20px; }
+  .cert-name { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--text-bright); }
+  .cert-detail { font-size: 11px; color: var(--text-dim); }
+
+  .radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .radio-option:has(input:checked) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.05);
+  }
+
+  .radio-option input { accent-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">F5<span>.</span>AUTO</div>
+    <div class="header-sub">Network Configuration Automation Console</div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span class="status-text">SYSTEM ONLINE</span>
+    <span class="tag tag-info">v3.7.2</span>
+  </div>
+</div>
+
+<div class="app-container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Network Session</div>
+      <div class="nav-item completed" onclick="showTab('net-vlans')">
+        <div class="step-num">✓</div>
+        <div>
+          <div>VLANs & Interfaces</div>
+          <div style="font-size:11px;color:var(--text-dim)">Step 1</div>
+        </div>
+      </div>
+      <div class="nav-item active" onclick="showTab('net-routes')">
+        <div class="step-num">2</div>
+        <div>
+          <div>Route Config</div>
+          <div style="font-size:11px;color:var(--text-dim)">Step 2</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('net-dns-ntp')">
+        <div class="step-num">3</div>
+        <div>
+          <div>DNS &amp; NTP</div>
+          <div style="font-size:11px;color:var(--text-dim)">Step 3</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('net-ha')">
+        <div class="step-num">4</div>
+        <div>
+          <div>High Availability</div>
+          <div style="font-size:11px;color:var(--text-dim)">Step 4</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">App Service Session</div>
+      <div class="nav-item" onclick="showTab('app-nodes')">
+        <div class="step-num">1</div>
+        <div>
+          <div>Nodes</div>
+          <div style="font-size:11px;color:var(--text-dim)">Backend Servers</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-pool')">
+        <div class="step-num">2</div>
+        <div>
+          <div>Pool Configuration</div>
+          <div style="font-size:11px;color:var(--text-dim)">LB &amp; Monitor</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-monitor')">
+        <div class="step-num">3</div>
+        <div>
+          <div>Health Monitors</div>
+          <div style="font-size:11px;color:var(--text-dim)">HTTP/TCP/ICMP</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-vip')">
+        <div class="step-num">4</div>
+        <div>
+          <div>Virtual Server</div>
+          <div style="font-size:11px;color:var(--text-dim)">VIP</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-snat')">
+        <div class="step-num">5</div>
+        <div>
+          <div>SNAT Config</div>
+          <div style="font-size:11px;color:var(--text-dim)">NAT Options</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-ssl')">
+        <div class="step-num">6</div>
+        <div>
+          <div>SSL Configuration</div>
+          <div style="font-size:11px;color:var(--text-dim)">Certs &amp; Profiles</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-profiles')">
+        <div class="step-num">7</div>
+        <div>
+          <div>Profiles</div>
+          <div style="font-size:11px;color:var(--text-dim)">HTTP/TCP/Persist</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-persist')">
+        <div class="step-num">8</div>
+        <div>
+          <div>Persistence</div>
+          <div style="font-size:11px;color:var(--text-dim)">Session Handling</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('app-irule')">
+        <div class="step-num">9</div>
+        <div>
+          <div>iRules &amp; Policies</div>
+          <div style="font-size:11px;color:var(--text-dim)">Optional</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Troubleshooting</div>
+      <div class="nav-item" onclick="showTab('ts-monitor')">
+        <div class="step-num">📊</div>
+        <div>
+          <div>Monitoring &amp; Logs</div>
+          <div style="font-size:11px;color:var(--text-dim)">Stats &amp; LTM Logs</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="showTab('ts-backup')">
+        <div class="step-num">💾</div>
+        <div>
+          <div>UCS Backup</div>
+          <div style="font-size:11px;color:var(--text-dim)">Save Config</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- ======= NET: VLANs ======= -->
+    <div id="tab-net-vlans" class="tab-content">
+      <div class="session-badge">⚡ NETWORK CONFIGURATION SESSION</div>
+      <div class="page-title">STEP 1 — VLANS & INTERFACES</div>
+      <div class="page-desc">Configure external/internal VLANs, assign self IPs, and set port lockdown policies.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🔌</span> VLAN CONFIGURATION</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>External VLAN Name</label>
+            <input type="text" id="ext-vlan-name" value="VLAN_External" placeholder="VLAN_External">
+          </div>
+          <div class="form-group">
+            <label>External VLAN Tag</label>
+            <input type="number" id="ext-vlan-tag" value="10" placeholder="10">
+          </div>
+          <div class="form-group">
+            <label>External Interface</label>
+            <select id="ext-iface">
+              <option>1.1</option><option>1.2</option><option>1.3</option><option>2.1</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Internal VLAN Name</label>
+            <input type="text" id="int-vlan-name" value="VLAN_Internal" placeholder="VLAN_Internal">
+          </div>
+          <div class="form-group">
+            <label>Internal VLAN Tag</label>
+            <input type="number" id="int-vlan-tag" value="20" placeholder="20">
+          </div>
+          <div class="form-group">
+            <label>Internal Interface</label>
+            <select id="int-iface">
+              <option>1.2</option><option>1.1</option><option>1.3</option><option>2.1</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🌐</span> SELF IP ASSIGNMENT</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>External Self-IP</label>
+            <input type="text" id="ext-selfip" value="203.0.113.10" placeholder="203.0.113.10">
+          </div>
+          <div class="form-group">
+            <label>External Netmask</label>
+            <input type="text" id="ext-mask" value="255.255.255.0" placeholder="255.255.255.0">
+          </div>
+          <div class="form-group">
+            <label>External Port Lockdown</label>
+            <select id="ext-lockdown">
+              <option>Allow Default</option>
+              <option>Allow All</option>
+              <option>Allow None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Internal Self-IP</label>
+            <input type="text" id="int-selfip" value="192.168.10.10" placeholder="192.168.10.10">
+          </div>
+          <div class="form-group">
+            <label>Internal Netmask</label>
+            <input type="text" id="int-mask" value="255.255.255.0" placeholder="255.255.255.0">
+          </div>
+          <div class="form-group">
+            <label>Internal Port Lockdown</label>
+            <select id="int-lockdown">
+              <option>Allow Default</option>
+              <option>Allow All</option>
+              <option>Allow None</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="toggle-group">
+            <label class="toggle">
+              <input type="checkbox" id="ha-floating" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+            <span class="toggle-label">Enable Floating IP (HA Mode)</span>
+          </div>
+          <div id="floating-section" style="margin-top:10px;" class="form-grid">
+            <div class="form-group">
+              <label>Floating External IP</label>
+              <input type="text" value="203.0.113.12" placeholder="203.0.113.12">
+            </div>
+            <div class="form-group">
+              <label>Floating Internal IP</label>
+              <input type="text" value="192.168.10.12" placeholder="192.168.10.12">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateVlanCmds()">⚡ GENERATE TMSH COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('vlan-terminal')">CLEAR</button>
+      </div>
+
+      <div class="terminal" id="vlan-terminal-wrap">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — VLAN/SELF-IP COMMANDS</span>
+        </div>
+        <div id="vlan-terminal">
+          <div class="terminal-line t-dim"># Commands will appear here after generation...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= NET: ROUTES ======= -->
+    <div id="tab-net-routes" class="tab-content active">
+      <div class="session-badge">⚡ NETWORK CONFIGURATION SESSION</div>
+      <div class="page-title">STEP 2 — ROUTE CONFIGURATION</div>
+      <div class="page-desc">Add default routes and static routes to upstream routers.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🛣️</span> DEFAULT ROUTE</div>
+        <div class="alert alert-info">
+          <span class="alert-icon">ℹ️</span>
+          <div>Default route <strong>0.0.0.0/0</strong> should point to your upstream router gateway. This ensures return traffic routes correctly through the external VLAN.</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Network</label>
+            <input type="text" id="route-net" value="0.0.0.0" placeholder="0.0.0.0">
+          </div>
+          <div class="form-group">
+            <label>Mask</label>
+            <input type="text" id="route-mask" value="0.0.0.0" placeholder="0.0.0.0">
+          </div>
+          <div class="form-group">
+            <label>Gateway (Upstream Router)</label>
+            <input type="text" id="route-gw" value="203.0.113.1" placeholder="203.0.113.1">
+          </div>
+          <div class="form-group">
+            <label>Route Name</label>
+            <input type="text" id="route-name" value="default_route" placeholder="default_route">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">➕</span> ADDITIONAL STATIC ROUTES</div>
+        <table class="data-table" id="static-routes-table">
+          <thead>
+            <tr>
+              <th>Network</th><th>Mask</th><th>Gateway</th><th>Name</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="static-routes-body">
+            <tr>
+              <td><input type="text" value="10.0.0.0" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+              <td><input type="text" value="255.0.0.0" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+              <td><input type="text" value="192.168.10.1" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+              <td><input type="text" value="internal_route" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+              <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" onclick="addStaticRoute()">+ ADD ROUTE</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateRouteCmds()">⚡ GENERATE ROUTE COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('route-terminal')">CLEAR</button>
+      </div>
+
+      <div class="terminal" id="route-terminal-wrap">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — ROUTE COMMANDS</span>
+        </div>
+        <div id="route-terminal"><div class="terminal-line t-dim"># Route commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= NET: DNS & NTP ======= -->
+    <div id="tab-net-dns-ntp" class="tab-content">
+      <div class="session-badge">⚡ NETWORK CONFIGURATION SESSION</div>
+      <div class="page-title">STEP 3 — DNS & NTP</div>
+      <div class="page-desc">Configure DNS resolvers and NTP servers for production readiness.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🔍</span> DNS CONFIGURATION</div>
+        <div class="alert alert-warn">
+          <span class="alert-icon">⚠️</span>
+          <div>DNS is critical for certificate validation, LDAP/AD auth, and log forwarding. Configure at least 2 DNS servers for redundancy.</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Primary DNS Server</label>
+            <input type="text" id="dns1" value="8.8.8.8" placeholder="8.8.8.8">
+          </div>
+          <div class="form-group">
+            <label>Secondary DNS Server</label>
+            <input type="text" id="dns2" value="8.8.4.4" placeholder="8.8.4.4">
+          </div>
+          <div class="form-group">
+            <label>DNS Search Domain</label>
+            <input type="text" id="dns-domain" value="company.local" placeholder="company.local">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🕐</span> NTP CONFIGURATION</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Primary NTP Server</label>
+            <input type="text" id="ntp1" value="pool.ntp.org" placeholder="pool.ntp.org">
+          </div>
+          <div class="form-group">
+            <label>Secondary NTP Server</label>
+            <input type="text" id="ntp2" value="time.google.com" placeholder="time.google.com">
+          </div>
+          <div class="form-group">
+            <label>Timezone</label>
+            <select id="ntp-tz">
+              <option>UTC</option>
+              <option>Asia/Kolkata</option>
+              <option>America/New_York</option>
+              <option>America/Los_Angeles</option>
+              <option>Europe/London</option>
+              <option>Asia/Singapore</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateDnsCmds()">⚡ GENERATE DNS/NTP COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('dns-terminal')">CLEAR</button>
+      </div>
+
+      <div class="terminal" id="dns-terminal-wrap">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — DNS/NTP COMMANDS</span>
+        </div>
+        <div id="dns-terminal"><div class="terminal-line t-dim"># DNS/NTP commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= NET: HA ======= -->
+    <div id="tab-net-ha" class="tab-content">
+      <div class="session-badge">⚡ NETWORK CONFIGURATION SESSION</div>
+      <div class="page-title">STEP 4 — HIGH AVAILABILITY SETUP</div>
+      <div class="page-desc">Configure device trust, config sync, and failover between two F5 devices.</div>
+
+      <div class="ha-device-pair">
+        <div class="card">
+          <div class="card-title"><span class="icon">🖥️</span> DEVICE 1 (PRIMARY)</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Management IP</label>
+              <input type="text" id="ha-dev1-mgmt" value="10.1.1.1" placeholder="10.1.1.1">
+            </div>
+            <div class="form-group">
+              <label>Hostname</label>
+              <input type="text" id="ha-dev1-hostname" value="bigip-01.lab.local" placeholder="bigip-01.lab.local">
+            </div>
+            <div class="form-group">
+              <label>Config Sync IP</label>
+              <input type="text" id="ha-dev1-sync" value="192.168.100.1" placeholder="192.168.100.1">
+            </div>
+            <div class="form-group">
+              <label>Failover IP</label>
+              <input type="text" id="ha-dev1-fo" value="192.168.101.1" placeholder="192.168.101.1">
+            </div>
+            <div class="form-group">
+              <label>Mirroring IP</label>
+              <input type="text" id="ha-dev1-mirror" value="192.168.102.1" placeholder="192.168.102.1">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">🖥️</span> DEVICE 2 (SECONDARY)</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Management IP</label>
+              <input type="text" id="ha-dev2-mgmt" value="10.1.1.2" placeholder="10.1.1.2">
+            </div>
+            <div class="form-group">
+              <label>Hostname</label>
+              <input type="text" id="ha-dev2-hostname" value="bigip-02.lab.local" placeholder="bigip-02.lab.local">
+            </div>
+            <div class="form-group">
+              <label>Config Sync IP</label>
+              <input type="text" id="ha-dev2-sync" value="192.168.100.2" placeholder="192.168.100.2">
+            </div>
+            <div class="form-group">
+              <label>Failover IP</label>
+              <input type="text" id="ha-dev2-fo" value="192.168.101.2" placeholder="192.168.101.2">
+            </div>
+            <div class="form-group">
+              <label>Mirroring IP</label>
+              <input type="text" id="ha-dev2-mirror" value="192.168.102.2" placeholder="192.168.102.2">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🔐</span> DEVICE TRUST CREDENTIALS (Device 2)</div>
+        <div class="alert alert-warn">
+          <span class="alert-icon">⚠️</span>
+          <div>Credentials are used only to establish trust. The admin password of the peer (Device 2) is required to complete Device Trust setup.</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Admin Username</label>
+            <input type="text" id="ha-admin-user" value="admin" placeholder="admin">
+          </div>
+          <div class="form-group">
+            <label>Admin Password</label>
+            <input type="password" id="ha-admin-pass" placeholder="••••••••">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">⚙️</span> HA OPTIONS</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>HA Mode</label>
+            <select id="ha-mode">
+              <option>Active-Standby</option>
+              <option>Active-Active</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sync Group Name</label>
+            <input type="text" id="ha-sync-group" value="sync-failover-group" placeholder="sync-failover-group">
+          </div>
+          <div class="form-group">
+            <label>Device Group Name</label>
+            <input type="text" id="ha-device-group" value="device-group-failover" placeholder="device-group-failover">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateHaCmds()">⚡ GENERATE HA COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('ha-terminal')">CLEAR</button>
+      </div>
+
+      <div class="terminal" id="ha-terminal-wrap">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — HA SETUP COMMANDS</span>
+        </div>
+        <div id="ha-terminal"><div class="terminal-line t-dim"># HA commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: NODES ======= -->
+    <div id="tab-app-nodes" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 1 — CREATE NODES</div>
+      <div class="page-desc">Define backend server nodes (pool members).</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🖥️</span> ADD NODE</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Node Name</label>
+            <input type="text" id="node-name" value="server-01" placeholder="server-01">
+          </div>
+          <div class="form-group">
+            <label>IP Address</label>
+            <input type="text" id="node-ip" value="192.168.10.101" placeholder="192.168.10.101">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="node-desc" value="Web Server 01" placeholder="Web Server 01">
+          </div>
+          <div class="form-group">
+            <label>Connection Limit (0=unlimited)</label>
+            <input type="number" id="node-limit" value="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Rate Limit (0=unlimited)</label>
+            <input type="number" id="node-rate" value="0">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-success btn-sm" onclick="addNode()">+ ADD NODE</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span> NODE LIST</div>
+        <div class="node-list" id="node-list">
+          <div class="node-row">
+            <div class="node-status node-up"></div>
+            <div class="node-ip">192.168.10.101</div>
+            <div class="node-name">server-01</div>
+            <div class="node-port">Web Server 01</div>
+            <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="this.closest('.node-row').remove()">✕</button>
+          </div>
+          <div class="node-row">
+            <div class="node-status node-up"></div>
+            <div class="node-ip">192.168.10.102</div>
+            <div class="node-name">server-02</div>
+            <div class="node-port">Web Server 02</div>
+            <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="this.closest('.node-row').remove()">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateNodeCmds()">⚡ GENERATE NODE COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('node-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — NODE COMMANDS</span>
+        </div>
+        <div id="node-terminal"><div class="terminal-line t-dim"># Node commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: POOL ======= -->
+    <div id="tab-app-pool" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 2 — CREATE POOL</div>
+      <div class="page-desc">Group nodes into a pool with load balancing method and health monitor.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏊</span> POOL CONFIGURATION</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Pool Name</label>
+            <input type="text" id="pool-name" value="pool_web_servers" placeholder="pool_web_servers">
+          </div>
+          <div class="form-group">
+            <label>Load Balancing Method</label>
+            <select id="pool-lb">
+              <option>Round Robin</option>
+              <option>Least Connections (member)</option>
+              <option>Least Connections (node)</option>
+              <option>Ratio (member)</option>
+              <option>Ratio (node)</option>
+              <option>Fastest (application)</option>
+              <option>Observed (member)</option>
+              <option>Predictive (member)</option>
+              <option>Weighted Least Connections (member)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Health Monitor</label>
+            <select id="pool-monitor">
+              <option>http</option><option>https</option><option>tcp</option>
+              <option>gateway_icmp</option><option>custom_http</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Service Port</label>
+            <input type="number" id="pool-port" value="80">
+          </div>
+          <div class="form-group">
+            <label>Slow Ramp Time (sec)</label>
+            <input type="number" id="pool-ramp" value="30">
+          </div>
+          <div class="form-group">
+            <label>Reselect Tries</label>
+            <input type="number" id="pool-reselect" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">👥</span> POOL MEMBERS</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Node</th><th>IP</th><th>Port</th><th>Ratio</th><th>Priority</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-success">UP</span> server-01</td>
+              <td style="color:var(--accent);">192.168.10.101</td>
+              <td>80</td><td>1</td><td>0</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-success">UP</span> server-02</td>
+              <td style="color:var(--accent);">192.168.10.102</td>
+              <td>80</td><td>1</td><td>0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generatePoolCmds()">⚡ GENERATE POOL COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('pool-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — POOL COMMANDS</span>
+        </div>
+        <div id="pool-terminal"><div class="terminal-line t-dim"># Pool commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: MONITOR ======= -->
+    <div id="tab-app-monitor" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 3 — HEALTH MONITORS</div>
+      <div class="page-desc">Configure HTTP, HTTPS, TCP, ICMP, and custom health monitors.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">❤️</span> MONITOR TYPE</div>
+        <div class="radio-group" id="monitor-type-group">
+          <label class="radio-option"><input type="radio" name="mon-type" value="http" checked onchange="updateMonitorForm(this.value)"> HTTP</label>
+          <label class="radio-option"><input type="radio" name="mon-type" value="https" onchange="updateMonitorForm(this.value)"> HTTPS</label>
+          <label class="radio-option"><input type="radio" name="mon-type" value="tcp" onchange="updateMonitorForm(this.value)"> TCP</label>
+          <label class="radio-option"><input type="radio" name="mon-type" value="icmp" onchange="updateMonitorForm(this.value)"> ICMP/Gateway</label>
+        </div>
+      </div>
+
+      <div class="card" id="monitor-form">
+        <div class="card-title"><span class="icon">⚙️</span> MONITOR PARAMETERS</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Monitor Name</label>
+            <input type="text" id="mon-name" value="custom_http_monitor">
+          </div>
+          <div class="form-group">
+            <label>Interval (sec)</label>
+            <input type="number" id="mon-interval" value="5">
+          </div>
+          <div class="form-group">
+            <label>Timeout (sec)</label>
+            <input type="number" id="mon-timeout" value="16">
+          </div>
+          <div class="form-group" id="mon-send-group">
+            <label>Send String</label>
+            <input type="text" id="mon-send" value="GET /health HTTP/1.1\r\nHost: example.com\r\n\r\n">
+          </div>
+          <div class="form-group" id="mon-recv-group">
+            <label>Receive String</label>
+            <input type="text" id="mon-recv" value="200 OK">
+          </div>
+          <div class="form-group" id="mon-port-group">
+            <label>Monitor Port</label>
+            <input type="number" id="mon-port" value="80">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateMonitorCmds()">⚡ GENERATE MONITOR COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('monitor-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — MONITOR COMMANDS</span>
+        </div>
+        <div id="monitor-terminal"><div class="terminal-line t-dim"># Monitor commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: VIP ======= -->
+    <div id="tab-app-vip" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 4 — VIRTUAL SERVER (VIP)</div>
+      <div class="page-desc">Create the Virtual IP - the front-end listener for your application traffic.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📡</span> VIRTUAL SERVER CONFIG</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>VIP Name</label>
+            <input type="text" id="vip-name" value="vs_web_443">
+          </div>
+          <div class="form-group">
+            <label>VIP IP Address</label>
+            <input type="text" id="vip-ip" value="203.0.113.100">
+          </div>
+          <div class="form-group">
+            <label>VIP Port</label>
+            <input type="number" id="vip-port" value="443">
+          </div>
+          <div class="form-group">
+            <label>Protocol</label>
+            <select id="vip-proto">
+              <option>TCP</option><option>UDP</option><option>SCTP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>VIP Type</label>
+            <select id="vip-type">
+              <option>Standard</option>
+              <option>Performance (Layer 4)</option>
+              <option>Forwarding (Layer 2)</option>
+              <option>Forwarding (IP)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Default Pool</label>
+            <input type="text" id="vip-pool" value="pool_web_servers">
+          </div>
+          <div class="form-group">
+            <label>VLAN (Restrict to)</label>
+            <select id="vip-vlan">
+              <option>All VLANs</option>
+              <option>VLAN_External</option>
+              <option>VLAN_Internal</option>
+            </select>
+          </div>
+        </div>
+        <div class="toggle-group" style="margin-top:12px;">
+          <label class="toggle">
+            <input type="checkbox" id="vip-enable" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span class="toggle-label">Enabled on Creation</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateVipCmds()">⚡ GENERATE VIP COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('vip-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — VIRTUAL SERVER COMMANDS</span>
+        </div>
+        <div id="vip-terminal"><div class="terminal-line t-dim"># VIP commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: SNAT ======= -->
+    <div id="tab-app-snat" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 5 — SNAT CONFIGURATION</div>
+      <div class="page-desc">Configure source network address translation for outbound connections to pool members.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🔀</span> SNAT TYPE</div>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="snat-type" value="automap" checked onchange="updateSnatForm(this.value)">
+            Automap
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="snat-type" value="snatpool" onchange="updateSnatForm(this.value)">
+            SNAT Pool
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="snat-type" value="none" onchange="updateSnatForm(this.value)">
+            No NAT
+          </label>
+        </div>
+        <div class="alert alert-info" style="margin-top:14px;">
+          <span class="alert-icon">ℹ️</span>
+          <div id="snat-explain"><strong>Automap</strong>: Uses the F5's self-IP as the source. Simple, no additional IPs needed. Recommended for most deployments.</div>
+        </div>
+      </div>
+
+      <div class="card" id="snat-pool-card" style="display:none;">
+        <div class="card-title"><span class="icon">🏊</span> SNAT POOL CONFIGURATION</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>SNAT Pool Name</label>
+            <input type="text" id="snat-pool-name" value="snat_pool_web">
+          </div>
+          <div class="form-group">
+            <label>SNAT IP Address 1</label>
+            <input type="text" id="snat-ip1" value="203.0.113.20">
+          </div>
+          <div class="form-group">
+            <label>SNAT IP Address 2</label>
+            <input type="text" id="snat-ip2" value="203.0.113.21">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateSnatCmds()">⚡ GENERATE SNAT COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('snat-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — SNAT COMMANDS</span>
+        </div>
+        <div id="snat-terminal"><div class="terminal-line t-dim"># SNAT commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: SSL ======= -->
+    <div id="tab-app-ssl" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 6 — SSL CONFIGURATION</div>
+      <div class="page-desc">Import certificates, create SSL profiles, and attach to virtual server.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📜</span> CERTIFICATE IMPORT</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Certificate Name</label>
+            <input type="text" id="ssl-cert-name" value="wildcard_cert_2025">
+          </div>
+          <div class="form-group">
+            <label>Certificate File</label>
+            <input type="text" id="ssl-cert-file" value="/tmp/server.crt" placeholder="/tmp/server.crt">
+          </div>
+          <div class="form-group">
+            <label>Private Key File</label>
+            <input type="text" id="ssl-key-file" value="/tmp/server.key" placeholder="/tmp/server.key">
+          </div>
+          <div class="form-group">
+            <label>Passphrase (if encrypted)</label>
+            <input type="password" id="ssl-passphrase" placeholder="Leave blank if none">
+          </div>
+        </div>
+        <div class="cert-badge" style="margin-top:14px;">
+          <span class="cert-icon">🔒</span>
+          <div>
+            <div class="cert-name">wildcard_cert_2025.crt</div>
+            <div class="cert-detail">CN=*.example.com | Valid until 2026-06-01 | SHA-256</div>
+          </div>
+          <span class="tag tag-success" style="margin-left:auto;">VALID</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🛡️</span> CLIENT SSL PROFILE</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Profile Name</label>
+            <input type="text" id="ssl-client-profile" value="ssl_client_web">
+          </div>
+          <div class="form-group">
+            <label>Certificate</label>
+            <input type="text" value="wildcard_cert_2025">
+          </div>
+          <div class="form-group">
+            <label>Key</label>
+            <input type="text" value="wildcard_cert_2025">
+          </div>
+          <div class="form-group">
+            <label>SSL Options / Ciphers</label>
+            <input type="text" value="ECDHE+AESGCM:ECDHE+AES256">
+          </div>
+          <div class="form-group">
+            <label>TLS Version</label>
+            <select>
+              <option>TLSv1.2+TLSv1.3</option>
+              <option>TLSv1.3 only</option>
+              <option>TLSv1.2 only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🔒</span> SERVER SSL PROFILE (OPTIONAL)</div>
+        <div class="toggle-group">
+          <label class="toggle">
+            <input type="checkbox" id="server-ssl-enable" onchange="document.getElementById('server-ssl-form').style.display=this.checked?'block':'none'">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span class="toggle-label">Enable Server-Side SSL (SSL re-encryption)</span>
+        </div>
+        <div id="server-ssl-form" style="display:none;margin-top:12px;" class="form-grid">
+          <div class="form-group">
+            <label>Server SSL Profile Name</label>
+            <input type="text" value="ssl_server_web">
+          </div>
+          <div class="form-group">
+            <label>CA Bundle</label>
+            <input type="text" value="ca-bundle.crt">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateSslCmds()">⚡ GENERATE SSL COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('ssl-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — SSL COMMANDS</span>
+        </div>
+        <div id="ssl-terminal"><div class="terminal-line t-dim"># SSL commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: PROFILES ======= -->
+    <div id="tab-app-profiles" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 7 — PROFILES CONFIGURATION</div>
+      <div class="page-desc">Attach HTTP, TCP, OneConnect, and other profiles to the virtual server.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📦</span> PROFILE SELECTION</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="toggle-group">
+            <label class="toggle"><input type="checkbox" id="prof-http" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <span class="toggle-label">HTTP Profile</span>
+            <span class="tag tag-success" style="margin-left:auto;">RECOMMENDED</span>
+          </div>
+          <div class="toggle-group">
+            <label class="toggle"><input type="checkbox" id="prof-tcp" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <span class="toggle-label">TCP Profile (Client + Server)</span>
+          </div>
+          <div class="toggle-group">
+            <label class="toggle"><input type="checkbox" id="prof-oneconnect"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <span class="toggle-label">OneConnect (Connection Multiplexing)</span>
+            <span class="tag tag-info" style="margin-left:auto;">OPTIONAL</span>
+          </div>
+          <div class="toggle-group">
+            <label class="toggle"><input type="checkbox" id="prof-xff" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <span class="toggle-label">X-Forwarded-For (Insert client IP in header)</span>
+          </div>
+          <div class="toggle-group">
+            <label class="toggle"><input type="checkbox" id="prof-compress"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <span class="toggle-label">HTTP Compression</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">⚙️</span> HTTP PROFILE SETTINGS</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>HTTP Profile Name</label>
+            <input type="text" id="http-profile-name" value="http_profile_web">
+          </div>
+          <div class="form-group">
+            <label>Request Header Insert</label>
+            <input type="text" value="X-Forwarded-Proto: https">
+          </div>
+          <div class="form-group">
+            <label>Fallback Host</label>
+            <input type="text" value="" placeholder="Optional">
+          </div>
+          <div class="form-group">
+            <label>Max Header Size (KB)</label>
+            <input type="number" value="32">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateProfileCmds()">⚡ GENERATE PROFILE COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('profile-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — PROFILE COMMANDS</span>
+        </div>
+        <div id="profile-terminal"><div class="terminal-line t-dim"># Profile commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: PERSIST ======= -->
+    <div id="tab-app-persist" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 8 — PERSISTENCE</div>
+      <div class="page-desc">Configure session persistence to ensure client affinity.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📌</span> COOKIE PERSISTENCE</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Cookie Profile Name</label>
+            <input type="text" id="cookie-name" value="cookie_persist_web">
+          </div>
+          <div class="form-group">
+            <label>Cookie Method</label>
+            <select id="cookie-method">
+              <option>Insert</option>
+              <option>Rewrite</option>
+              <option>Passive</option>
+              <option>Hash</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cookie Name</label>
+            <input type="text" id="cookie-cname" value="BIGipServerpool_web">
+          </div>
+          <div class="form-group">
+            <label>Expiration (sec, 0=session)</label>
+            <input type="number" id="cookie-exp" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🌐</span> SOURCE IP PERSISTENCE (FALLBACK)</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Source IP Profile Name</label>
+            <input type="text" id="srcip-name" value="srcip_persist_web">
+          </div>
+          <div class="form-group">
+            <label>Timeout (sec)</label>
+            <input type="number" id="srcip-timeout" value="180">
+          </div>
+          <div class="form-group">
+            <label>Mask (IPv4)</label>
+            <input type="text" id="srcip-mask" value="255.255.255.255">
+          </div>
+          <div class="form-group">
+            <label>Override Connection Limit</label>
+            <select>
+              <option>Disabled</option><option>Enabled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generatePersistCmds()">⚡ GENERATE PERSISTENCE COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('persist-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — PERSISTENCE COMMANDS</span>
+        </div>
+        <div id="persist-terminal"><div class="terminal-line t-dim"># Persistence commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= APP: iRULES ======= -->
+    <div id="tab-app-irule" class="tab-content">
+      <div class="session-badge">🚀 APPLICATION SERVICE SESSION</div>
+      <div class="page-title">STEP 9 — iRULES & POLICIES</div>
+      <div class="page-desc">Create iRules for custom traffic logic and bind to Virtual Server.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📜</span> IRULE TEMPLATES</div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="irule-tmpl" value="redirect" checked onchange="loadIruleTemplate(this.value)"> HTTP→HTTPS Redirect</label>
+          <label class="radio-option"><input type="radio" name="irule-tmpl" value="header" onchange="loadIruleTemplate(this.value)"> Header Manipulation</label>
+          <label class="radio-option"><input type="radio" name="irule-tmpl" value="uri" onchange="loadIruleTemplate(this.value)"> URI Routing</label>
+          <label class="radio-option"><input type="radio" name="irule-tmpl" value="ratelimit" onchange="loadIruleTemplate(this.value)"> Rate Limiting</label>
+          <label class="radio-option"><input type="radio" name="irule-tmpl" value="custom" onchange="loadIruleTemplate(this.value)"> Custom</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">✏️</span> IRULE EDITOR</div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>iRule Name</label>
+            <input type="text" id="irule-name" value="irule_http_redirect">
+          </div>
+          <div class="form-group">
+            <label>Bind to Virtual Server</label>
+            <input type="text" value="vs_web_443">
+          </div>
+        </div>
+        <div class="irule-box" id="irule-display">
+<span class="irule-comment"># HTTP to HTTPS redirect iRule</span>
+<span class="irule-kw">when</span> <span class="irule-event">HTTP_REQUEST</span> {
+    <span class="irule-kw">if</span> { [<span class="irule-event">HTTP::uri</span>] <span class="irule-kw">starts_with</span> <span class="irule-str">"/"</span> } {
+        <span class="irule-event">HTTP::redirect</span> <span class="irule-str">"https://[HTTP::host][HTTP::uri]"</span>
+    }
+}
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateIruleCmds()">⚡ GENERATE iRULE COMMANDS</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('irule-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — iRULE COMMANDS</span>
+        </div>
+        <div id="irule-terminal"><div class="terminal-line t-dim"># iRule commands appear here...</div></div>
+      </div>
+    </div>
+
+    <!-- ======= TS: MONITORING ======= -->
+    <div id="tab-ts-monitor" class="tab-content">
+      <div class="session-badge">🔍 TROUBLESHOOTING SESSION</div>
+      <div class="page-title">STEP 1 — MONITORING & LOGS</div>
+      <div class="page-desc">Check LTM logs, dashboard stats, and configure SNMP monitoring.</div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📊</span> DIAGNOSTIC COMMANDS</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left;" onclick="runDiag('ltm-log')">📄 Tail LTM Log — <code style="color:var(--accent);font-size:11px;">/var/log/ltm</code></button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="runDiag('pool-status')">🏊 Show Pool Member Status</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="runDiag('vs-stats')">📡 Show Virtual Server Stats</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="runDiag('conn-table')">🔗 Show Connection Table</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="runDiag('cpu-mem')">💻 Show CPU & Memory Usage</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="runDiag('ha-status')">⚡ Show HA Failover Status</button>
+        </div>
+      </div>
+
+      <div class="terminal" style="max-height:400px;">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">DIAGNOSTIC OUTPUT</span>
+        </div>
+        <div id="diag-terminal">
+          <div class="terminal-line t-dim"># Click a diagnostic command above to run it...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======= TS: BACKUP ======= -->
+    <div id="tab-ts-backup" class="tab-content">
+      <div class="session-badge">🔍 TROUBLESHOOTING SESSION</div>
+      <div class="page-title">STEP 2 — UCS BACKUP & SAVE CONFIG</div>
+      <div class="page-desc">Take a UCS archive backup of the complete F5 configuration.</div>
+
+      <div class="card backup-card">
+        <div class="card-title"><span class="icon">💾</span> UCS BACKUP CONFIGURATION</div>
+        <div class="alert alert-warn">
+          <span class="alert-icon">⚠️</span>
+          <div>Always take a UCS backup before and after any major configuration changes. UCS includes all configuration, SSL certificates, and license files.</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Backup Filename</label>
+            <input type="text" id="ucs-name" value="bigip-backup-2025-01-15.ucs">
+          </div>
+          <div class="form-group">
+            <label>Passphrase (optional encryption)</label>
+            <input type="password" id="ucs-pass" placeholder="Leave blank for no encryption">
+          </div>
+          <div class="form-group">
+            <label>Backup Path</label>
+            <input type="text" id="ucs-path" value="/var/local/ucs/">
+          </div>
+        </div>
+        <div class="toggle-group" style="margin-top:10px;">
+          <label class="toggle">
+            <input type="checkbox" id="ucs-private" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span class="toggle-label">Include private keys in backup</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span> BACKUP BEST PRACTICES</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.6;">
+          <div style="display:flex;gap:8px;align-items:flex-start;"><span class="tag tag-success">✓</span> Store UCS files off-box (SCP to backup server or download)</div>
+          <div style="display:flex;gap:8px;align-items:flex-start;"><span class="tag tag-success">✓</span> Name backups with date stamp for easy identification</div>
+          <div style="display:flex;gap:8px;align-items:flex-start;"><span class="tag tag-success">✓</span> Run <code style="color:var(--accent);">tmsh save sys config</code> before taking UCS</div>
+          <div style="display:flex;gap:8px;align-items:flex-start;"><span class="tag tag-warn">⚠</span> UCS restore will overwrite ALL configuration — use with caution</div>
+          <div style="display:flex;gap:8px;align-items:flex-start;"><span class="tag tag-info">ℹ</span> Schedule automated UCS via cron for production systems</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-warn" onclick="generateUcsCmds()">💾 GENERATE UCS BACKUP COMMANDS</button>
+        <button class="btn btn-primary" onclick="generateSaveCmd()">💿 GENERATE SAVE CONFIG COMMAND</button>
+        <button class="btn btn-ghost" onclick="clearTerminal('backup-terminal')">CLEAR</button>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span class="terminal-title">TMSH OUTPUT — BACKUP COMMANDS</span>
+        </div>
+        <div id="backup-terminal"><div class="terminal-line t-dim"># Backup commands appear here...</div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div>
+
+<script>
+  // Tab management
+  function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    // Mark nav item active
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if(n.getAttribute('onclick') && n.getAttribute('onclick').includes(tabId)) {
+        n.classList.add('active');
+      }
+    });
+  }
+
+  function appendCmd(termId, lines) {
+    const t = document.getElementById(termId);
+    t.innerHTML = '';
+    lines.forEach(l => {
+      const div = document.createElement('div');
+      div.className = 'terminal-line';
+      div.innerHTML = l;
+      t.appendChild(div);
+    });
+  }
+
+  function clearTerminal(id) {
+    document.getElementById(id).innerHTML = '<div class="terminal-line t-dim"># Cleared.</div>';
+  }
+
+  function tv(id) { return document.getElementById(id)?.value || ''; }
+  function tc(id) { return document.getElementById(id)?.checked; }
+
+  // ======= VLAN COMMANDS =======
+  function generateVlanCmds() {
+    const en = tv('ext-vlan-name'), et = tv('ext-vlan-tag'), ei = tv('ext-iface');
+    const inn = tv('int-vlan-name'), it = tv('int-vlan-tag'), ii = tv('int-iface');
+    const es = tv('ext-selfip'), em = tv('ext-mask'), el = tv('ext-lockdown') || 'Allow Default';
+    const is_ = tv('int-selfip'), im = tv('int-mask'), il = tv('int-lockdown') || 'Allow Default';
+    const lockMap = {'Allow Default':'default','Allow All':'allow-all','Allow None':'none'};
+
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 VLAN & SELF-IP CONFIGURATION</span>`,
+      `<span class="t-dim"># Generated: ${new Date().toLocaleString()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Step 1: Create External VLAN</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net vlan ${en} tag ${et} interfaces add { ${ei} { untagged } }</span>`,
+      `<span class="t-ok">✓ External VLAN created: ${en} (tag ${et})</span>`,
+      ``,
+      `<span class="t-info"># Step 2: Create Internal VLAN</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net vlan ${inn} tag ${it} interfaces add { ${ii} { untagged } }</span>`,
+      `<span class="t-ok">✓ Internal VLAN created: ${inn} (tag ${it})</span>`,
+      ``,
+      `<span class="t-info"># Step 3: Create External Self-IP</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net self ${en}_selfip address ${es}/${cidr(em)} vlan ${en} allow-service ${lockMap[el] || 'default'}</span>`,
+      `<span class="t-ok">✓ External Self-IP created: ${es}</span>`,
+      ``,
+      `<span class="t-info"># Step 4: Create Internal Self-IP</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net self ${inn}_selfip address ${is_}/${cidr(im)} vlan ${inn} allow-service ${lockMap[il] || 'default'}</span>`,
+      `<span class="t-ok">✓ Internal Self-IP created: ${is_}</span>`,
+    ];
+
+    if(tc('ha-floating')) {
+      lines.push(``, `<span class="t-info"># Step 5: Create Floating IPs for HA</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net self ${en}_float address 203.0.113.12/${cidr(em)} vlan ${en} allow-service default traffic-group traffic-group-1</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net self ${inn}_float address 192.168.10.12/${cidr(im)} vlan ${inn} allow-service default traffic-group traffic-group-1</span>`);
+      lines.push(`<span class="t-ok">✓ Floating IPs created for HA</span>`);
+    }
+
+    lines.push(``, `<span class="t-info"># Save configuration</span>`);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`);
+    lines.push(`<span class="t-ok">✓ Configuration saved successfully</span>`);
+
+    appendCmd('vlan-terminal', lines);
+  }
+
+  function cidr(mask) {
+    const m = mask.split('.').map(Number);
+    return m.reduce((acc, oct) => acc + oct.toString(2).split('').filter(b => b === '1').length, 0);
+  }
+
+  // ======= ROUTE COMMANDS =======
+  function generateRouteCmds() {
+    const rn = tv('route-net'), rm = tv('route-mask'), rg = tv('route-gw'), rname = tv('route-name');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 ROUTE CONFIGURATION</span>`,
+      `<span class="t-dim"># Generated: ${new Date().toLocaleString()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Add default route</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create net route ${rname} network ${rn}/${cidr(rm)} gw ${rg}</span>`,
+      `<span class="t-ok">✓ Default route created: 0.0.0.0/0 → ${rg}</span>`,
+      ``,
+      `<span class="t-info"># Verify routes</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">list net route</span>`,
+      `<span class="t-dim">net route ${rname} {</span>`,
+      `<span class="t-dim">    gw ${rg}</span>`,
+      `<span class="t-dim">    network ${rn}/0</span>`,
+      `<span class="t-dim">}</span>`,
+      ``,
+      `<span class="t-info"># Save config</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ Routes saved</span>`,
+    ];
+    appendCmd('route-terminal', lines);
+  }
+
+  function addStaticRoute() {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" value="10.10.0.0" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+      <td><input type="text" value="255.255.0.0" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+      <td><input type="text" value="192.168.1.1" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+      <td><input type="text" value="new_route" style="background:transparent;border:none;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;width:130px;"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>`;
+    document.getElementById('static-routes-body').appendChild(row);
+  }
+
+  // ======= DNS/NTP COMMANDS =======
+  function generateDnsCmds() {
+    const d1 = tv('dns1'), d2 = tv('dns2'), dd = tv('dns-domain');
+    const n1 = tv('ntp1'), n2 = tv('ntp2'), tz = tv('ntp-tz') || 'UTC';
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 DNS & NTP CONFIGURATION</span>`,
+      `<span class="t-dim"># Generated: ${new Date().toLocaleString()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Configure DNS</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify sys dns name-servers add { ${d1} ${d2} }</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify sys dns search add { ${dd} }</span>`,
+      `<span class="t-ok">✓ DNS servers configured: ${d1}, ${d2}</span>`,
+      ``,
+      `<span class="t-info"># Configure NTP</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify sys ntp servers add { ${n1} ${n2} }</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify sys ntp timezone ${tz}</span>`,
+      `<span class="t-ok">✓ NTP configured: ${n1}, ${n2} | Timezone: ${tz}</span>`,
+      ``,
+      `<span class="t-info"># Verify NTP sync status</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">run util ntpdate -q ${n1}</span>`,
+      `<span class="t-prompt">bash#</span> <span class="t-cmd">ntpq -p</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ DNS/NTP configuration saved</span>`,
+    ];
+    appendCmd('dns-terminal', lines);
+  }
+
+  // ======= HA COMMANDS =======
+  function generateHaCmds() {
+    const d1m = tv('ha-dev1-mgmt'), d2m = tv('ha-dev2-mgmt');
+    const d1h = tv('ha-dev1-hostname'), d2h = tv('ha-dev2-hostname');
+    const d1s = tv('ha-dev1-sync'), d2s = tv('ha-dev2-sync');
+    const d1f = tv('ha-dev1-fo'), d2f = tv('ha-dev2-fo');
+    const d1mir = tv('ha-dev1-mirror');
+    const user = tv('ha-admin-user') || 'admin';
+    const sg = tv('ha-sync-group'), dg = tv('ha-device-group');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 HIGH AVAILABILITY CONFIGURATION</span>`,
+      `<span class="t-dim"># Generated: ${new Date().toLocaleString()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># === RUN ON DEVICE 1 (${d1h}) ===</span>`,
+      ``,
+      `<span class="t-info"># Step 1: Configure ConfigSync IP</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify cm device ${d1h} configsync-ip ${d1s}</span>`,
+      `<span class="t-ok">✓ ConfigSync IP set: ${d1s}</span>`,
+      ``,
+      `<span class="t-info"># Step 2: Configure Failover Unicast</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify cm device ${d1h} unicast-address {{ ip ${d1f} port 1026 } { ip management-ip port 1026 }}</span>`,
+      `<span class="t-ok">✓ Failover IP set: ${d1f}</span>`,
+      ``,
+      `<span class="t-info"># Step 3: Configure Mirroring</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify cm device ${d1h} mirror-ip ${d1mir}</span>`,
+      ``,
+      `<span class="t-info"># Step 4: Add Device Trust (from Device 1, pointing to Device 2)</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify cm trust-domain Root ca-devices add { ${d2m} } name ${d2h} username ${user} password ****</span>`,
+      `<span class="t-ok">✓ Device trust established with ${d2m}</span>`,
+      ``,
+      `<span class="t-info"># Step 5: Create Device Group</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create cm device-group ${dg} type sync-failover devices add { ${d1h} ${d2h} } auto-sync disabled network-failover enabled</span>`,
+      `<span class="t-ok">✓ Device group created: ${dg}</span>`,
+      ``,
+      `<span class="t-info"># Step 6: Create Traffic Group with Floating IP</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify cm traffic-group traffic-group-1 ha-order { ${d1h} ${d2h} }</span>`,
+      ``,
+      `<span class="t-info"># Step 7: Sync Configuration</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">run cm config-sync to-group ${dg}</span>`,
+      `<span class="t-ok">✓ Config sync initiated to group: ${dg}</span>`,
+      ``,
+      `<span class="t-info"># Step 8: Verify HA Status</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show cm failover-status</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show cm sync-status</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ HA configuration complete</span>`,
+    ];
+    appendCmd('ha-terminal', lines);
+  }
+
+  // ======= NODE COMMANDS =======
+  function addNode() {
+    const nn = tv('node-name'), ni = tv('node-ip'), nd = tv('node-desc');
+    if(!ni) return;
+    const row = document.createElement('div');
+    row.className = 'node-row';
+    row.innerHTML = `
+      <div class="node-status node-unknown"></div>
+      <div class="node-ip">${ni}</div>
+      <div class="node-name">${nn}</div>
+      <div class="node-port">${nd}</div>
+      <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="this.closest('.node-row').remove()">✕</button>`;
+    document.getElementById('node-list').appendChild(row);
+  }
+
+  function generateNodeCmds() {
+    const rows = document.querySelectorAll('#node-list .node-row');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 NODE CONFIGURATION</span>`,
+      `<span class="t-dim"># Generated: ${new Date().toLocaleString()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+    ];
+    rows.forEach(row => {
+      const ip = row.querySelector('.node-ip').textContent;
+      const name = row.querySelector('.node-name').textContent;
+      lines.push(`<span class="t-info"># Create node: ${name}</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm node ${name} address ${ip}</span>`);
+      lines.push(`<span class="t-ok">✓ Node created: ${name} (${ip})</span>`);
+      lines.push(``);
+    });
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`);
+    lines.push(`<span class="t-ok">✓ Nodes saved</span>`);
+    appendCmd('node-terminal', lines);
+  }
+
+  // ======= POOL COMMANDS =======
+  function generatePoolCmds() {
+    const pn = tv('pool-name'), plb = tv('pool-lb') || 'Round Robin', pm = tv('pool-monitor') || 'http', pp = tv('pool-port');
+    const lbMap = {'Round Robin':'round-robin','Least Connections (member)':'least-connections-member','Least Connections (node)':'least-connections-node','Ratio (member)':'ratio-member','Fastest (application)':'fastest-app-response','Weighted Least Connections (member)':'weighted-least-connections-member'};
+    const lbKey = lbMap[plb] || 'round-robin';
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 POOL CONFIGURATION</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Create pool with members</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm pool ${pn} \\</span>`,
+      `<span class="t-cmd">    load-balancing-mode ${lbKey} \\</span>`,
+      `<span class="t-cmd">    monitor ${pm} \\</span>`,
+      `<span class="t-cmd">    members add {</span>`,
+      `<span class="t-cmd">        server-01:${pp} { address 192.168.10.101 }</span>`,
+      `<span class="t-cmd">        server-02:${pp} { address 192.168.10.102 }</span>`,
+      `<span class="t-cmd">    }</span>`,
+      `<span class="t-ok">✓ Pool created: ${pn}</span>`,
+      `<span class="t-ok">  LB Method: ${lbKey}</span>`,
+      `<span class="t-ok">  Monitor: ${pm}</span>`,
+      ``,
+      `<span class="t-info"># Verify pool status</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show ltm pool ${pn} members all-properties</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ Pool configuration saved</span>`,
+    ];
+    appendCmd('pool-terminal', lines);
+  }
+
+  // ======= MONITOR COMMANDS =======
+  function updateMonitorForm(type) {
+    const showRecv = ['http','https'].includes(type);
+    document.getElementById('mon-send-group').style.display = showRecv ? '' : 'none';
+    document.getElementById('mon-recv-group').style.display = showRecv ? '' : 'none';
+    if(type === 'icmp') document.getElementById('mon-port-group').style.display = 'none';
+    else document.getElementById('mon-port-group').style.display = '';
+    const portMap = {http:'80',https:'443',tcp:'80',icmp:'*'};
+    const sendMap = {http:'GET /health HTTP/1.1\\r\\nHost: example.com\\r\\n\\r\\n',https:'GET /health HTTP/1.1\\r\\nHost: example.com\\r\\n\\r\\n',tcp:''};
+    if(document.getElementById('mon-port')) document.getElementById('mon-port').value = portMap[type]||'80';
+    if(document.getElementById('mon-send')) document.getElementById('mon-send').value = sendMap[type]||'';
+    document.getElementById('mon-name').value = `custom_${type}_monitor`;
+  }
+
+  function generateMonitorCmds() {
+    const type = document.querySelector('input[name="mon-type"]:checked').value;
+    const mn = tv('mon-name'), mi = tv('mon-interval'), mt = tv('mon-timeout');
+    const ms = tv('mon-send'), mr = tv('mon-recv'), mp = tv('mon-port');
+    const parentMap = {http:'http',https:'https',tcp:'tcp',icmp:'gateway_icmp'};
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 HEALTH MONITOR — ${type.toUpperCase()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Create ${type.toUpperCase()} monitor</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm monitor ${parentMap[type]} ${mn} \\</span>`,
+      `<span class="t-cmd">    interval ${mi} \\</span>`,
+      `<span class="t-cmd">    timeout ${mt} \\</span>`,
+    ];
+    if(['http','https'].includes(type)) {
+      lines.push(`<span class="t-cmd">    send "${ms}" \\</span>`);
+      lines.push(`<span class="t-cmd">    recv "${mr}" \\</span>`);
+    }
+    if(type !== 'icmp') lines.push(`<span class="t-cmd">    destination *:${mp}</span>`);
+    lines.push(`<span class="t-ok">✓ Monitor created: ${mn}</span>`);
+    lines.push(``);
+    lines.push(`<span class="t-info"># Verify monitor</span>`);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">show ltm monitor ${parentMap[type]} ${mn}</span>`);
+    lines.push(``);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`);
+    lines.push(`<span class="t-ok">✓ Monitor saved</span>`);
+    appendCmd('monitor-terminal', lines);
+  }
+
+  // ======= VIP COMMANDS =======
+  function generateVipCmds() {
+    const vn = tv('vip-name'), vi = tv('vip-ip'), vp = tv('vip-port');
+    const vproto = tv('vip-proto') || 'TCP', vpool = tv('vip-pool');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 VIRTUAL SERVER CONFIGURATION</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Create Virtual Server (VIP)</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm virtual ${vn} \\</span>`,
+      `<span class="t-cmd">    destination ${vi}:${vp} \\</span>`,
+      `<span class="t-cmd">    ip-protocol ${vproto.toLowerCase()} \\</span>`,
+      `<span class="t-cmd">    pool ${vpool} \\</span>`,
+      `<span class="t-cmd">    profiles add { http tcp ssl_client_web } \\</span>`,
+      `<span class="t-cmd">    source-address-translation { type automap } \\</span>`,
+      `<span class="t-cmd">    translate-address enabled \\</span>`,
+      `<span class="t-cmd">    translate-port enabled</span>`,
+      `<span class="t-ok">✓ Virtual Server created: ${vn}</span>`,
+      `<span class="t-ok">  VIP: ${vi}:${vp} → Pool: ${vpool}</span>`,
+      ``,
+      `<span class="t-info"># Verify VIP status</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show ltm virtual ${vn}</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show ltm virtual ${vn} stats</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ Virtual Server saved</span>`,
+    ];
+    appendCmd('vip-terminal', lines);
+  }
+
+  // ======= SNAT COMMANDS =======
+  function updateSnatForm(val) {
+    document.getElementById('snat-pool-card').style.display = val === 'snatpool' ? '' : 'none';
+    const explains = {
+      automap: '<strong>Automap</strong>: Uses the F5\'s self-IP as the source. Simple, no additional IPs needed. Recommended for most deployments.',
+      snatpool: '<strong>SNAT Pool</strong>: Use a pool of dedicated IPs as source. Recommended when you need specific source IPs for backend servers or firewall rules.',
+      none: '<strong>No NAT</strong>: Traffic is forwarded with original client IP. Requires routing configuration on backend servers to return via F5.'
+    };
+    document.getElementById('snat-explain').innerHTML = explains[val];
+  }
+
+  function generateSnatCmds() {
+    const type = document.querySelector('input[name="snat-type"]:checked').value;
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 SNAT CONFIGURATION — ${type.toUpperCase()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+    ];
+    if(type === 'automap') {
+      lines.push(`<span class="t-info"># Apply SNAT Automap to Virtual Server</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 source-address-translation { type automap }</span>`);
+      lines.push(`<span class="t-ok">✓ SNAT Automap applied to vs_web_443</span>`);
+    } else if(type === 'snatpool') {
+      const spn = tv('snat-pool-name'), si1 = tv('snat-ip1'), si2 = tv('snat-ip2');
+      lines.push(`<span class="t-info"># Create SNAT Pool</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm snatpool ${spn} members add { ${si1} ${si2} }</span>`);
+      lines.push(`<span class="t-ok">✓ SNAT Pool created: ${spn} with IPs: ${si1}, ${si2}</span>`);
+      lines.push(``);
+      lines.push(`<span class="t-info"># Apply SNAT Pool to Virtual Server</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 source-address-translation { type snat pool ${spn} }</span>`);
+      lines.push(`<span class="t-ok">✓ SNAT Pool applied to vs_web_443</span>`);
+    } else {
+      lines.push(`<span class="t-info"># Disable SNAT — No NAT</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 source-address-translation { type none }</span>`);
+      lines.push(`<span class="t-warn">⚠ Ensure backend servers have a route back through F5 for client traffic</span>`);
+    }
+    lines.push(``);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`);
+    lines.push(`<span class="t-ok">✓ SNAT configuration saved</span>`);
+    appendCmd('snat-terminal', lines);
+  }
+
+  // ======= SSL COMMANDS =======
+  function generateSslCmds() {
+    const cn = tv('ssl-cert-name'), cf = tv('ssl-cert-file'), kf = tv('ssl-key-file');
+    const pp = tv('ssl-passphrase');
+    const cp = tv('ssl-client-profile');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 SSL CONFIGURATION</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Step 1: Import Certificate</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">install sys crypto cert ${cn} from-local-file ${cf}</span>`,
+      `<span class="t-ok">✓ Certificate imported: ${cn}</span>`,
+      ``,
+      `<span class="t-info"># Step 2: Import Private Key</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">install sys crypto key ${cn} from-local-file ${kf}${pp ? ` passphrase ${pp}` : ''}</span>`,
+      `<span class="t-ok">✓ Private key imported: ${cn}</span>`,
+      ``,
+      `<span class="t-info"># Step 3: Create Client SSL Profile</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm profile client-ssl ${cp} \\</span>`,
+      `<span class="t-cmd">    cert-key-chain add { ${cn} { cert ${cn} key ${cn} } } \\</span>`,
+      `<span class="t-cmd">    ciphers ECDHE+AESGCM:ECDHE+AES256 \\</span>`,
+      `<span class="t-cmd">    options { dont-insert-empty-fragments no-tlsv1 no-sslv3 }</span>`,
+      `<span class="t-ok">✓ Client SSL Profile created: ${cp}</span>`,
+    ];
+    if(tc('server-ssl-enable')) {
+      lines.push(``);
+      lines.push(`<span class="t-info"># Step 4: Create Server SSL Profile</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm profile server-ssl ssl_server_web defaults-from serverssl</span>`);
+      lines.push(`<span class="t-ok">✓ Server SSL Profile created: ssl_server_web</span>`);
+    }
+    lines.push(``);
+    lines.push(`<span class="t-info"># Apply SSL Profile to Virtual Server</span>`);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 profiles add { ${cp} { context clientside } }</span>`);
+    lines.push(`<span class="t-ok">✓ SSL Profile applied to VIP</span>`);
+    lines.push(``);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`);
+    lines.push(`<span class="t-ok">✓ SSL configuration saved</span>`);
+    appendCmd('ssl-terminal', lines);
+  }
+
+  // ======= PROFILE COMMANDS =======
+  function generateProfileCmds() {
+    const hn = tv('http-profile-name');
+    const useHttp = tc('prof-http'), useTcp = tc('prof-tcp'), useOC = tc('prof-oneconnect'), useXFF = tc('prof-xff');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 PROFILES CONFIGURATION</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+    ];
+    if(useHttp) {
+      lines.push(`<span class="t-info"># Create HTTP Profile</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm profile http ${hn} \\</span>`);
+      lines.push(`<span class="t-cmd">    defaults-from http \\</span>`);
+      if(useXFF) lines.push(`<span class="t-cmd">    insert-xforwarded-for enabled \\</span>`);
+      lines.push(`<span class="t-cmd">    redirect-rewrite matching</span>`);
+      lines.push(`<span class="t-ok">✓ HTTP Profile created: ${hn}</span>`);
+      lines.push(``);
+    }
+    if(useTcp) {
+      lines.push(`<span class="t-info"># Create TCP Profile (Client-side)</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm profile tcp tcp_client_optimized defaults-from tcp-wan-optimized</span>`);
+      lines.push(`<span class="t-info"># Create TCP Profile (Server-side)</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm profile tcp tcp_server_optimized defaults-from tcp-lan-optimized</span>`);
+      lines.push(`<span class="t-ok">✓ TCP Profiles created</span>`);
+      lines.push(``);
+    }
+    if(useOC) {
+      lines.push(`<span class="t-info"># Create OneConnect Profile</span>`);
+      lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm profile one-connect oneconnect_profile defaults-from oneconnect</span>`);
+      lines.push(`<span class="t-ok">✓ OneConnect Profile created</span>`);
+      lines.push(``);
+    }
+    lines.push(`<span class="t-info"># Apply all profiles to Virtual Server</span>`);
+    const profileList = [];
+    if(useHttp) profileList.push(hn);
+    if(useTcp) profileList.push('tcp_client_optimized { context clientside }', 'tcp_server_optimized { context serverside }');
+    if(useOC) profileList.push('oneconnect_profile');
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 profiles add { ${profileList.join(' ')} }</span>`);
+    lines.push(`<span class="t-ok">✓ Profiles applied to vs_web_443</span>`);
+    lines.push(``);
+    lines.push(`<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`);
+    lines.push(`<span class="t-ok">✓ Profile configuration saved</span>`);
+    appendCmd('profile-terminal', lines);
+  }
+
+  // ======= PERSIST COMMANDS =======
+  function generatePersistCmds() {
+    const cn = tv('cookie-name'), cm = tv('cookie-method') || 'Insert', cc = tv('cookie-cname'), ce = tv('cookie-exp');
+    const sn = tv('srcip-name'), st = tv('srcip-timeout'), sm = tv('srcip-mask');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 PERSISTENCE CONFIGURATION</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Create Cookie Persistence Profile</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm persistence cookie ${cn} \\</span>`,
+      `<span class="t-cmd">    cookie-name ${cc} \\</span>`,
+      `<span class="t-cmd">    method ${cm.toLowerCase()} \\</span>`,
+      `<span class="t-cmd">    expiration ${ce}</span>`,
+      `<span class="t-ok">✓ Cookie Persistence created: ${cn}</span>`,
+      ``,
+      `<span class="t-info"># Create Source IP Persistence Profile (Fallback)</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm persistence source-addr ${sn} \\</span>`,
+      `<span class="t-cmd">    timeout ${st} \\</span>`,
+      `<span class="t-cmd">    mask ${sm}</span>`,
+      `<span class="t-ok">✓ Source IP Persistence created: ${sn}</span>`,
+      ``,
+      `<span class="t-info"># Apply persistence to Virtual Server</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 \\</span>`,
+      `<span class="t-cmd">    persist replace-all-with { ${cn} } \\</span>`,
+      `<span class="t-cmd">    fallback-persistence ${sn}</span>`,
+      `<span class="t-ok">✓ Persistence profiles applied to vs_web_443</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ Persistence configuration saved</span>`,
+    ];
+    appendCmd('persist-terminal', lines);
+  }
+
+  // ======= IRULE COMMANDS =======
+  const iruleTemplates = {
+    redirect: {name:'irule_http_redirect', code:`when HTTP_REQUEST {\n    if { [HTTP::uri] starts_with "/" } {\n        HTTP::redirect "https://[HTTP::host][HTTP::uri]"\n    }\n}`},
+    header: {name:'irule_header_manip', code:`when HTTP_REQUEST {\n    HTTP::header insert "X-Real-IP" [IP::client_addr]\n    HTTP::header remove "Server"\n}\nwhen HTTP_RESPONSE {\n    HTTP::header insert "Strict-Transport-Security" "max-age=31536000"\n}`},
+    uri: {name:'irule_uri_routing', code:`when HTTP_REQUEST {\n    switch -glob [HTTP::uri] {\n        "/api/*" { pool pool_api_servers }\n        "/static/*" { pool pool_static_servers }\n        default { pool pool_web_servers }\n    }\n}`},
+    ratelimit: {name:'irule_rate_limit', code:`when CLIENT_ACCEPTED {\n    if { [conn count] > 1000 } {\n        reject\n    }\n}\nwhen HTTP_REQUEST {\n    if { [active_members pool_web_servers] < 1 } {\n        HTTP::respond 503 content "Service Unavailable"\n    }\n}`},
+    custom: {name:'irule_custom', code:`when HTTP_REQUEST {\n    # Add your custom iRule logic here\n\n}`}
+  };
+
+  function loadIruleTemplate(val) {
+    const t = iruleTemplates[val];
+    document.getElementById('irule-name').value = t.name;
+    document.getElementById('irule-display').innerHTML = formatIrule(t.code);
+  }
+
+  function formatIrule(code) {
+    return code
+      .replace(/\b(when|if|switch|glob|default|reject)\b/g, '<span class="irule-kw">$1</span>')
+      .replace(/\b(HTTP_REQUEST|HTTP_RESPONSE|CLIENT_ACCEPTED)\b/g, '<span class="irule-event">$1</span>')
+      .replace(/\b(HTTP::redirect|HTTP::uri|HTTP::host|HTTP::header|HTTP::respond|IP::client_addr|active_members|conn count|pool)\b/g, '<span class="irule-event">$1</span>')
+      .replace(/"([^"]+)"/g, '<span class="irule-str">"$1"</span>')
+      .replace(/(#[^\n]+)/g, '<span class="irule-comment">$1</span>');
+  }
+
+  function generateIruleCmds() {
+    const name = tv('irule-name');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 iRULE CONFIGURATION</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Create iRule: ${name}</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">create ltm rule ${name} {</span>`,
+      `<span class="t-cmd">    when HTTP_REQUEST {</span>`,
+      `<span class="t-cmd">        HTTP::redirect "https://[HTTP::host][HTTP::uri]"</span>`,
+      `<span class="t-cmd">    }</span>`,
+      `<span class="t-cmd">}</span>`,
+      `<span class="t-ok">✓ iRule created: ${name}</span>`,
+      ``,
+      `<span class="t-info"># Bind iRule to Virtual Server</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">modify ltm virtual vs_web_443 rules add { ${name} }</span>`,
+      `<span class="t-ok">✓ iRule bound to vs_web_443</span>`,
+      ``,
+      `<span class="t-info"># Verify iRule binding</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">list ltm virtual vs_web_443 rules</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ iRule configuration saved</span>`,
+    ];
+    appendCmd('irule-terminal', lines);
+  }
+
+  // ======= DIAGNOSTIC COMMANDS =======
+  const diagOutputs = {
+    'ltm-log': [
+      `<span class="t-prompt">bash#</span> <span class="t-cmd">tail -f /var/log/ltm</span>`,
+      `<span class="t-dim">Jan 15 10:23:45 bigip-01 err mcpd[2345]: 01070417:3: Common No route to host</span>`,
+      `<span class="t-dim">Jan 15 10:23:46 bigip-01 notice tmm[5678]: 01260013:5: SSL Handshake failed for TCP from 10.0.0.1:45231 to 203.0.113.100:443</span>`,
+      `<span class="t-ok">Jan 15 10:23:47 bigip-01 notice tmm[5678]: 01260009:5: Connection from 10.0.0.1:45232 to 203.0.113.100:443 established</span>`,
+      `<span class="t-dim">Jan 15 10:23:48 bigip-01 notice tmm[5678]: 01220001:5: LB pool pool_web_servers now has available members</span>`,
+    ],
+    'pool-status': [
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show ltm pool pool_web_servers members all-properties</span>`,
+      ``,
+      `<span class="t-info">Ltm::Pool Member: pool_web_servers</span>`,
+      `<span class="t-dim">  Member Name         Status      Connections  Current</span>`,
+      `<span class="t-dim">  ─────────────────────────────────────────────────────</span>`,
+      `<span class="t-ok">  server-01:80        Available   156          14</span>`,
+      `<span class="t-ok">  server-02:80        Available   142          11</span>`,
+      `<span class="t-dim">  ─────────────────────────────────────────────────────</span>`,
+      `<span class="t-ok">  Total Active Members: 2/2    Status: Available</span>`,
+    ],
+    'vs-stats': [
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show ltm virtual vs_web_443 stats</span>`,
+      `<span class="t-info">Virtual Server Stats: vs_web_443</span>`,
+      `<span class="t-dim">  Client bytes in:  2.3GB     Client bytes out: 18.7GB</span>`,
+      `<span class="t-dim">  Current conns:    247       Max conns: 1234</span>`,
+      `<span class="t-ok">  Availability: Available    State: Enabled</span>`,
+      `<span class="t-dim">  Total requests: 4,892,331</span>`,
+    ],
+    'conn-table': [
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show sys connection ss-server-addr 203.0.113.100</span>`,
+      `<span class="t-info">Sys::Connections</span>`,
+      `<span class="t-dim">  Total records returned: 247</span>`,
+      `<span class="t-dim">  10.0.0.1:52341  →  203.0.113.100:443  →  192.168.10.101:80  ESTABLISHED</span>`,
+      `<span class="t-dim">  10.0.0.2:61234  →  203.0.113.100:443  →  192.168.10.102:80  ESTABLISHED</span>`,
+    ],
+    'cpu-mem': [
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show sys performance all-stats</span>`,
+      `<span class="t-info">Sys::Performance</span>`,
+      `<span class="t-ok">  CPU Usage (TMM):     12.4%</span>`,
+      `<span class="t-ok">  CPU Usage (System):  8.1%</span>`,
+      `<span class="t-ok">  Memory (TMM):        2.1GB / 8.0GB (26%)</span>`,
+      `<span class="t-ok">  Memory (Total):      3.4GB / 16.0GB (21%)</span>`,
+    ],
+    'ha-status': [
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show cm failover-status</span>`,
+      `<span class="t-info">CM::Failover Status</span>`,
+      `<span class="t-ok">  bigip-01.lab.local:  ACTIVE</span>`,
+      `<span class="t-dim">  bigip-02.lab.local:  STANDBY</span>`,
+      ``,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">show cm sync-status</span>`,
+      `<span class="t-ok">  Sync Status: In Sync</span>`,
+      `<span class="t-dim">  Last sync: 2025-01-15 10:20:33</span>`,
+    ]
+  };
+
+  function runDiag(type) {
+    const lines = diagOutputs[type] || [`<span class="t-dim">No output</span>`];
+    appendCmd('diag-terminal', lines);
+  }
+
+  // ======= UCS BACKUP COMMANDS =======
+  function generateUcsCmds() {
+    const un = tv('ucs-name'), up = tv('ucs-path'), uprivate = tc('ucs-private'), upass = tv('ucs-pass');
+    const lines = [
+      `<span class="t-dim"># ============================================</span>`,
+      `<span class="t-dim"># F5 UCS BACKUP PROCEDURE</span>`,
+      `<span class="t-dim"># Generated: ${new Date().toLocaleString()}</span>`,
+      `<span class="t-dim"># ============================================</span>`,
+      ``,
+      `<span class="t-info"># Step 1: Save running configuration first</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ Running config saved</span>`,
+      ``,
+      `<span class="t-info"># Step 2: Create UCS archive</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys ucs ${up}${un}${!uprivate ? ' no-private-key' : ''}${upass ? ` passphrase ${upass}` : ''}</span>`,
+      `<span class="t-ok">✓ UCS backup created: ${up}${un}</span>`,
+      ``,
+      `<span class="t-info"># Step 3: Verify backup file</span>`,
+      `<span class="t-prompt">bash#</span> <span class="t-cmd">ls -lh ${up}${un}</span>`,
+      `<span class="t-dim">-rw-r--r-- 1 root root 45M Jan 15 10:30 ${un}</span>`,
+      ``,
+      `<span class="t-info"># Step 4: SCP backup to remote server (recommended)</span>`,
+      `<span class="t-prompt">bash#</span> <span class="t-cmd">scp ${up}${un} admin@backup-server:/backups/f5/</span>`,
+      `<span class="t-ok">✓ Backup transferred to remote server</span>`,
+      ``,
+      `<span class="t-info"># Step 5: List all UCS backups</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">list sys ucs</span>`,
+      ``,
+      `<span class="t-info"># To RESTORE from UCS (use with caution!)</span>`,
+      `<span class="t-warn">tmsh# load sys ucs ${up}${un} no-license${upass ? ` passphrase ${upass}` : ''}</span>`,
+    ];
+    appendCmd('backup-terminal', lines);
+  }
+
+  function generateSaveCmd() {
+    const lines = [
+      `<span class="t-info"># Save running configuration</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">save sys config</span>`,
+      `<span class="t-ok">✓ Configuration saved to /config/bigip.conf</span>`,
+      ``,
+      `<span class="t-info"># Verify config partition</span>`,
+      `<span class="t-prompt">tmsh#</span> <span class="t-cmd">list sys config partitions</span>`,
+    ];
+    appendCmd('backup-terminal', lines);
+  }
+
+  // Initialize iRule display on load
+  document.addEventListener('DOMContentLoaded', () => {
+    const disp = document.getElementById('irule-display');
+    if(disp) disp.innerHTML = formatIrule(iruleTemplates.redirect.code);
+  });
+</script>
+</body>
+</html>
